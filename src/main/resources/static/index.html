@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>我的音乐云</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-layout">
+    <header class="header">
+        <div class="logo">MMuisc</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索歌曲/歌手" autocomplete="off">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+
+            <div id="searchOverlay" class="search-overlay" style="display: none;">
+                <div class="search-section" id="historySection">
+                    <div class="section-title">
+                        <span>历史记录</span>
+                        <i class="fas fa-trash-alt delete-history-btn" onclick="clearSearchHistory()" title="清空历史"></i>
+                    </div>
+                    <div id="searchHistoryTags" class="tags-container">
+                    </div>
+                </div>
+                <div class="search-section">
+                    <div class="section-title">热门搜索</div>
+                    <div id="hotSearchList" class="hot-search-list">
+                        <div class="loading-text">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="user-info" id="userInfoArea">
+            <button class="ai-report-nav-btn" onclick="event.stopPropagation(); openAiReportCenter();">
+                <i class="fas fa-magic"></i> 听歌报告
+            </button>
+            <img id="headerAvatar" src="placeholder.png">
+            <span id="headerNickname">加载中...</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <nav class="sidebar">
+            <div class="nav-group">
+                <a href="#" class="menu-item active" data-content="recommendation"><i class="fas fa-thumbs-up"></i> 推荐</a>
+                <a href="#" class="menu-item" data-content="my-music"><i class="fas fa-music"></i> 我的音乐</a>
+                <a href="#" class="menu-item" data-content="recent-playback"><i class="fas fa-history"></i> 最近播放</a>
+            </div>
+
+            <div class="playlist-toggle-container">
+                <div class="playlist-toggle-header">
+                    <div class="toggle-tabs">
+                        <span id="tabCustomPlaylist" class="toggle-tab active" onclick="switchPlaylistTab('custom')">自建歌单</span>
+                        <span class="divider">|</span>
+                        <span id="tabCollectedPlaylist" class="toggle-tab" onclick="switchPlaylistTab('collected')">收藏歌单</span>
+                    </div>
+                    <i class="fas fa-plus add-playlist-btn" onclick="openCreatePlaylistModal()" title="新建歌单"></i>
+                </div>
+
+                <div id="sidebarPlaylistList" class="sidebar-list">
+                    <div class="loading-state" style="padding:10px;font-size:0.8em;color:#999">暂无歌单</div>
+                </div>
+            </div>
+
+        </nav>
+
+
+        <main class="main-content">
+
+            <div id="mainContentArea" class="content-page">
+                <div class="content-header">
+                    <div class="content-title-wrapper">
+                        <h2 id="contentTitle">推荐歌单</h2>
+                        <button id="refreshBtn" class="action-btn" title="刷新推荐歌单" style="display: block;">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="contentList" class="list-container">
+                    <div class="loading-state"><i class="fas fa-spinner fa-spin"></i> 正在加载...</div>
+                </div>
+            </div>
+
+            <div id="recommendationView" class="content-page" style="display: none;">
+
+                <div class="rec-header">
+                    <h1 id="recGreeting">HI 用户, 今日为你推荐</h1>
+                </div>
+
+                <div class="rec-section">
+                    <div class="section-header">
+                        <h3>🔥 热门歌曲推荐</h3>
+                        <button class="action-btn" onclick="loadHotSongsSection(this)" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div id="recHotSongsList" class="song-list">
+                    </div>
+                </div>
+
+                <div class="rec-section">
+                    <div class="section-header">
+                        <h3 id="simiSongsTitle">📻 猜你喜欢</h3>
+                        <button class="action-btn" onclick="loadSimiSongsSection(this)" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div id="recSimiSongsList" class="grid-3x3-container">
+                    </div>
+                </div>
+
+                <div class="rec-section">
+                    <div class="section-header">
+                        <h3>👍 推荐歌单</h3>
+                        <button class="action-btn" onclick="loadRecPlaylistsSection(this)" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div id="recRecPlaylists" class="grid-6-col-container">
+                    </div>
+                </div>
+
+                <div class="rec-section">
+                    <div class="section-header">
+                        <h3>🏆 榜单精选</h3>
+                        <button class="action-btn" onclick="loadChartsSection(this)" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div id="recCharts" class="charts-column-container">
+                    </div>
+                </div>
+            </div>
+
+            <div id="recentPlaybackView" class="content-page" style="display: none;">
+                <div class="content-header">
+                    <div class="content-title-wrapper">
+                        <h2>最近播放 <span id="recentCount" style="font-size:0.6em;color:#999;font-weight:normal;"></span></h2>
+                    </div>
+
+                    <div class="recent-toolbar">
+                        <button class="ph-btn primary small" onclick="playAllRecent()"><i class="fas fa-play"></i> 播放全部</button>
+                        <button class="ph-btn secondary small" onclick="enterBatchMode('download')"><i class="fas fa-download"></i> 批量下载</button>
+                        <button class="ph-btn secondary small" onclick="enterBatchMode('general')"><i class="fas fa-tasks"></i> 批量操作</button>
+
+                        <div class="toolbar-right-column">
+                            <div class="search-box small-search">
+                                <input type="text" id="recentSearchInput" placeholder="搜索历史记录..." oninput="filterRecentSongs(this.value)">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="recentListContainer" class="list-container song-list">
+                </div>
+
+                <div id="batchActionBar" class="batch-action-bar" style="display: none;">
+                    <div class="batch-info">已选择 <span id="batchSelectCount" style="color:var(--primary-color);font-weight:bold;">0</span> 首歌曲</div>
+
+                    <div class="batch-btns" id="batchGeneralBtns">
+                        <button onclick="batchAction('play')"><i class="fas fa-play"></i> 播放</button>
+                        <button onclick="batchAction('add')"><i class="fas fa-plus"></i> 添加到列表</button>
+                        <button onclick="batchAction('download')"><i class="fas fa-download"></i> 下载</button>
+                        <button onclick="batchAction('delete')" class="danger"><i class="fas fa-trash"></i> 删除</button>
+                    </div>
+
+                    <div class="batch-btns" id="batchDownloadBtns" style="display:none;">
+                        <button onclick="batchAction('download')" class="primary"><i class="fas fa-download"></i> 确认下载</button>
+                    </div>
+
+                    <div class="batch-controls">
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)"> 全选
+                        </label>
+                        <button class="close-batch" onclick="exitBatchMode()">退出模式</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="playlistManagementPage" class="content-page playlist-manager" style="display: none;">
+                <div class="content-header">
+                    <h2 id="playlistManagementTitle">播放列表</h2>
+                    <button id="clearAllSongsBtn" class="action-btn" title="清空播放列表"><i class="fas fa-trash-alt"></i> 清空</button>
+                </div>
+                <ul id="fullPlaylistSongs">
+                </ul>
+            </div>
+
+            <div id="profileView" class="main-content-view" style="display: none;">
+                <h3>我的个人资料</h3>
+
+                <form id="profileForm">
+                    <label for="profilePhone">手机号 :</label>
+                    <input type="text" id="profilePhone" name="phone" readonly>
+
+                    <label for="profileUsername">昵称:</label>
+                    <input type="text" id="profileUsername" name="username" required>
+
+                    <label>头像 (点击图片更换):</label>
+
+                    <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+
+                    <img id="profileCurrentAvatar" src="" alt="头像预览" title="点击更换头像" style="width: 80px; height: 80px; border-radius: 50%; margin-top: 10px; object-fit: cover; cursor: pointer; border: 2px solid #eee;">
+
+                    <label for="profileGender">性别:</label>
+                    <select id="profileGender" name="gender">
+                        <option value="UNKNOWN">未设置</option>
+                        <option value="MALE">男</option>
+                        <option value="FEMALE">女</option>
+                    </select>
+
+                    <label for="profileBirthday">生日:</label>
+                    <input type="date" id="profileBirthday" name="birthday">
+
+                    <label for="profileLocation">现居地:</label>
+                    <input type="text" id="profileLocation" name="location">
+
+                    <label for="profileSignature">个性签名:</label>
+                    <textarea id="profileSignature" name="signature"></textarea>
+
+                    <button type="submit">保存修改</button>
+                    <p id="profileMessage" style="margin-top: 15px; min-height: 20px;"></p>
+                </form>
+            </div>
+
+            <div id="myMusicView" class="content-page" style="display: none;">
+                <div class="content-header">
+                    <div class="my-music-tabs">
+                        <span class="music-tab active" data-tab="songs" onclick="switchMyMusicTab('songs')">歌曲</span>
+                        <span class="music-tab" data-tab="playlists" onclick="switchMyMusicTab('playlists')">歌单</span>
+                        <span class="music-tab" data-tab="charts" onclick="switchMyMusicTab('charts')">排行榜</span>
+                    </div>
+                </div>
+
+                <div id="myMusicSongsToolbar" class="recent-toolbar">
+                    <button class="ph-btn primary small" onclick="playAllMyMusicSongs()"><i class="fas fa-play"></i> 播放全部</button>
+                    <button class="ph-btn secondary small" onclick="enterMyMusicBatchMode('download')"><i class="fas fa-download"></i> 批量下载</button>
+                    <button class="ph-btn secondary small" onclick="enterMyMusicBatchMode('general')"><i class="fas fa-tasks"></i> 批量操作</button>
+
+                    <div class="toolbar-right-column">
+                        <div class="search-box small-search">
+                            <input type="text" id="myMusicSongSearch" placeholder="搜索喜欢的歌曲..." oninput="searchMyMusicSongs(this.value)">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="myMusicPlaylistToolbar" class="recent-toolbar" style="display:none;">
+                    <button class="ph-btn secondary small" onclick="enterMyMusicPlaylistBatchMode()"><i class="fas fa-tasks"></i> 批量管理</button>
+
+                    <div class="toolbar-right-column">
+                        <div class="search-box small-search">
+                            <input type="text" id="myMusicPlaylistSearch" placeholder="搜索歌单..." oninput="searchMyMusicPlaylists(this.value)">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="myMusicListContainer" class="list-container song-list">
+                </div>
+
+                <div id="myMusicBatchBar" class="batch-action-bar" style="display: none;">
+                    <div class="batch-info">已选择 <span id="myMusicSelectCount" style="color:var(--primary-color);font-weight:bold;">0</span> 项</div>
+
+                    <div class="batch-btns" id="mmBatchGeneralBtns" style="display:none;">
+                        <button onclick="mmBatchAction('play')"><i class="fas fa-play"></i> 播放</button>
+                        <button onclick="mmBatchAction('add')"><i class="fas fa-plus"></i> 添加</button>
+                        <button onclick="mmBatchAction('delete')" class="danger"><i class="fas fa-trash"></i> 删除</button>
+                    </div>
+
+                    <div class="batch-btns" id="mmBatchDownloadBtns" style="display:none;">
+                        <button onclick="mmBatchAction('download')" class="primary"><i class="fas fa-download"></i> 确认下载</button>
+                    </div>
+
+                    <div class="batch-btns" id="mmBatchPlaylistBtns" style="display:none;">
+                        <button onclick="mmBatchPlaylistAction('delete')" class="danger"><i class="fas fa-trash"></i> 删除歌单</button>
+                    </div>
+
+                    <div class="batch-controls">
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            <input type="checkbox" id="mmSelectAllCheckbox" onchange="toggleMyMusicSelectAll(this.checked)"> 全选
+                        </label>
+                        <button class="close-batch" onclick="exitMyMusicBatchMode()">退出批量</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="searchResultView" class="content-page" style="display: none;">
+                <div class="content-header">
+                    <h2 id="searchKeywordTitle">搜索结果</h2>
+                </div>
+
+                <div class="search-tabs">
+                    <div class="search-tab active" data-type="1" onclick="switchSearchTab(1)">歌曲</div>
+                    <div class="search-tab" data-type="100" onclick="switchSearchTab(100)">歌手</div>
+                    <div class="search-tab" data-type="1000" onclick="switchSearchTab(1000)">歌单</div>
+                    <div class="search-tab" data-type="1000_chart" onclick="switchSearchTab(1000, 'charts')">排行榜</div>
+                </div>
+
+                <div id="searchResultContainer" class="list-container">
+                </div>
+            </div>
+
+
+        </main>
+    </div>
+
+    <footer class="player-footer">
+        <div class="player-info">
+            <img id="playerCover" src="placeholder.png" alt="封面" onerror="this.onerror=null;this.src='placeholder.png';">
+            <div>
+                <p id="playerTitle">未播放</p>
+                <small id="playerArtist">未知</small>
+            </div>
+        </div>
+
+        <div class="player-controls">
+            <button id="prevSongBtn" class="control-btn" title="上一首"><i class="fas fa-backward"></i></button>
+            <audio id="audioPlayer" controls preload="auto"></audio>
+            <button id="nextSongBtn" class="control-btn" title="下一首"><i class="fas fa-forward"></i></button>
+        </div>
+
+        <div class="lyric-display" id="lyricDisplay" title="点击查看完整歌词">
+            <span id="currentLyricText" class="placeholder-lyric">暂无歌词信息</span>
+        </div>
+
+        <div class="player-right-controls">
+            <button id="playbackModeBtn" class="control-btn" title="播放模式"><i class="fas fa-random"></i></button>
+            <button id="togglePlaylistBtn" class="control-btn" title="打开播放列表"><i class="fas fa-list"></i></button>
+        </div>
+    </footer>
+</div>
+
+<div id="lyricModal" class="lyric-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalSongTitle"></h3>
+            <span class="modal-close" id="closeModalBtn">&times;</span>
+        </div>
+        <div id="fullLyricText" class="full-lyric-text">
+            正在加载歌词...
+        </div>
+    </div>
+</div>
+
+<div id="playbackModeOptions" class="playback-mode-options">
+    <div class="option-item" data-mode="loop-one"><i class="fas fa-redo-alt"></i> 单曲循环</div>
+    <div class="option-item" data-mode="shuffle"><i class="fas fa-random"></i> 随机播放</div>
+    <div class="option-item" data-mode="loop-all"><i class="fas fa-sync-alt"></i> 列表循环</div>
+    <div class="option-item" data-mode="sequential"><i class="fas fa-stream"></i> 顺序播放</div>
+</div>
+
+<div id="miniPlaylist" class="mini-playlist-drawer">
+    <div class="drawer-header">
+        <h4>当前播放列表</h4>
+        <div class="header-actions">
+            <button id="editPlaylistBtn" class="action-btn small-btn" title="编辑播放列表"><i class="fas fa-edit"></i></button>
+            <button id="clearPlaylistBtn" class="action-btn small-btn" title="清空播放列表"><i class="fas fa-trash-alt"></i></button>
+            <button id="closeMiniPlaylistBtn" class="action-btn small-btn" title="关闭"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <div class="mini-playlist-content">
+        <ul id="miniPlaylistSongs">
+            <li class="empty-state">播放列表为空</li>
+        </ul>
+    </div>
+</div>
+
+<div id="createPlaylistModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="width:300px; text-align:center;">
+        <h3>新建歌单</h3>
+        <input type="text" id="newPlaylistNameInput" placeholder="请输入歌单名称" style="width:90%;padding:8px;margin:15px 0;">
+        <div style="display:flex; justify-content:space-between;">
+            <button class="action-btn" onclick="closeModal('createPlaylistModal')">取消</button>
+            <button class="action-btn" onclick="confirmCreatePlaylist()" style="color:var(--primary-color)">创建</button>
+        </div>
+    </div>
+</div>
+
+<div id="userPopup" class="user-popup" style="display: none;">
+    <div class="popup-header">
+        <i class="fas fa-edit edit-btn" title="编辑资料" onclick="goToProfileEdit()"></i>
+    </div>
+
+    <div class="popup-info">
+        <img id="popupAvatar" src="placeholder.png" alt="头像">
+        <div class="popup-name" id="popupNickname">用户昵称</div>
+        <div class="popup-detail">🎂 <span id="popupBirthday">未设置</span></div>
+        <div class="popup-sign" id="popupSign">个性签名：暂无</div>
+    </div>
+
+    <div class="popup-footer">
+        <div class="footer-btn" onclick="showAccountSwitcher()">
+            <i class="fas fa-exchange-alt"></i> 切换账号
+        </div>
+        <div class="footer-btn logout" onclick="logout()">
+            <i class="fas fa-power-off"></i> 退出登录
+        </div>
+    </div>
+
+    <div id="accountSwitcher" class="account-switcher" style="display: none;">
+        <div class="switcher-header">
+            <span>选择账号</span>
+            <span class="back-btn" onclick="hideAccountSwitcher()">返回</span>
+        </div>
+        <div id="historyAccountList" class="history-list">
+        </div>
+        <div class="add-account" onclick="logout()">
+            <i class="fas fa-plus"></i> 添加/登录新账号
+        </div>
+    </div>
+</div>
+
+<div id="successToast">
+    <img id="toastAvatar" src="placeholder.png">
+    <div class="toast-content">
+        <span class="toast-title">账号切换成功</span>
+        <span id="toastName" class="toast-message">欢迎回来</span>
+    </div>
+    <i class="fas fa-check-circle toast-icon"></i>
+</div>
+
+<div id="addToModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="width:300px; text-align:center;">
+        <h3>添加歌曲到...</h3>
+        <div class="add-options-list">
+            <button class="action-btn wide-btn" id="addToQueueBtn">
+                <i class="fas fa-list"></i> 当前播放列表 (稍后播放)
+            </button>
+            <button class="action-btn wide-btn" id="addToMyPlaylistBtn">
+                <i class="fas fa-folder-plus"></i> 我的收藏歌单
+            </button>
+        </div>
+        <button class="action-btn" onclick="closeModal('addToModal')" style="margin-top:15px;">取消</button>
+    </div>
+</div>
+
+<div id="contextMenu">
+</div>
+
+<div id="commonToast" class="common-toast">
+    <i id="commonToastIcon" class="fas fa-info-circle"></i>
+    <span id="commonToastMsg">消息提示</span>
+</div>
+
+<div id="aiReportModal" class="lyric-modal"> <div class="modal-content report-modal-container">
+    <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <h3 style="margin:0;"><i class="fas fa-robot"></i> 听歌报告中心</h3>
+            <button id="manualGenerateReportBtn" class="ph-btn small primary">
+                <i class="fas fa-sparkles"></i> 生成新报告
+            </button>
+        </div>
+        <span class="modal-close" onclick="closeModal('aiReportModal')">&times;</span>
+    </div>
+    <div class="report-layout-body">
+        <div class="report-sidebar" id="reportHistoryList"></div>
+        <div class="report-main-content">
+            <div id="aiReportText" class="report-text-scroll"></div>
+            <div id="aiRecSongsSection" style="display:none; margin-top:20px;">
+                <h4 style="border-left:4px solid var(--primary-color); padding-left:10px;">✨ 专属推荐</h4>
+                <div id="aiRecGrid" class="report-rec-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<a id="downloadAnchor" style="display:none;"></a>
+<script src="js/script.js"></script>
+</body>
+</html>

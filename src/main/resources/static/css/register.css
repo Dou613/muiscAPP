@@ -1,0 +1,86 @@
+/* register.css */
+:root {
+    --primary-color: #e44d42; /* 网易云红色 */
+    --background-color: #f7f7f7;
+    --card-background: #ffffff;
+    --text-color: #333;
+    --light-text-color: #999;
+    --border-color: #eee;
+}
+
+body.login-body {
+    margin: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f0f0f0, var(--primary-color) 80%);
+}
+
+.login-container {
+    background-color: var(--card-background);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    text-align: center;
+}
+
+.login-title {
+    color: var(--primary-color);
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.login-button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.login-button:hover {
+    background-color: #d13a30;
+}
+
+.login-message {
+    margin-top: 15px;
+    font-size: 14px;
+    min-height: 20px; /* 确保消息占位 */
+}
+
+.register-link {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--light-text-color);
+}
+
+.register-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
